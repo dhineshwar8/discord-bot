@@ -3,6 +3,8 @@ from discord.ext import commands
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+from flask import Flask
+from threading import Thread
 
 # Load environment variables
 load_dotenv()
@@ -16,6 +18,17 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+# Flask app setup
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Discord bot is running!"
+
+# Run Flask in a separate thread to avoid blocking the bot
+def run_flask():
+    app.run(host="0.0.0.0", port=5000)
 
 @bot.event
 async def on_ready():
@@ -38,7 +51,7 @@ async def solve(ctx, language: str, *, problem_description: str):
     try:
         response = client.chat.completions.create(
             model="gpt-4",
-            messages=[
+            messages=[ 
                 {"role": "system", "content": "You are an expert programmer skilled in solving algorithmic problems."},
                 {
                     "role": "user",
@@ -68,5 +81,14 @@ async def solve(ctx, language: str, *, problem_description: str):
     except Exception as e:
         await ctx.send(f"An error occurred while solving the problem: {e}")
 
-# Run the bot
-bot.run(DISCORD_BOT_TOKEN)
+# Run the bot and Flask web server
+def run_bot():
+    bot.run(DISCORD_BOT_TOKEN)
+
+if __name__ == "__main__":
+    # Run Flask in a separate thread
+    thread = Thread(target=run_flask)
+    thread.start()
+
+    # Run the bot
+    run_bot()
