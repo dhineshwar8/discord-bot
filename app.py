@@ -24,11 +24,11 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Discord bot is running!"
+    return "Discord bot and Flask server are running on Render!"
 
 # Run Flask in a separate thread to avoid blocking the bot
 def run_flask():
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
 
 @bot.event
 async def on_ready():
